@@ -132,6 +132,9 @@ class Rectangle(Figure):
 
     def set_w_h(self, w, h):
         x, y = self.get_x_y()
+        self.width = w
+        self.height = h
+        x, y = self.origin[0], self.origin[1]
 
         if w < 0:
             x += w
@@ -148,7 +151,6 @@ class Rectangle(Figure):
         w = event.x - self.origin[0]
         h = event.y - self.origin[1]
         self.set_w_h(w, h)
-
         self.tbox.layer.disconnect(self.id_release)
         self.tbox.layer.disconnect(self.id_motion)
 
@@ -201,7 +203,9 @@ class Ellipse(Figure):
                 self.ellipse.get_property('y'))
 
     def set_w_h(self, w, h):
-        x, y = self.get_x_y()
+        self.width = w
+        self.height = h
+        x, y = self.origin[0], self.origin[1]
 
         if w < 0:
             x += w
@@ -233,8 +237,9 @@ class Ellipse(Figure):
         self.marker2.moveto(x + w, y + h)
 
     def resize(self, xnew, ynew):
-        x, y = self.get_x_y()
+        x, y = self.origin[0], self.origin[1]
         self.set_w_h(xnew - x, ynew - y)
+        print("Equis", xnew, "la i", ynew)
 
     def button_moved(self, src, tgt, event):
         w = event.x - self.origin[0]
