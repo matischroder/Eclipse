@@ -232,6 +232,7 @@ class Ellipse(Figure):
 
     def moveto(self, x, y):
         self.set_x_y(x, y)
+        self.origin = x, y
         w = self.ellipse.get_property('width')
         h = self.ellipse.get_property('height')
         self.marker2.moveto(x + w, y + h)
@@ -239,7 +240,6 @@ class Ellipse(Figure):
     def resize(self, xnew, ynew):
         x, y = self.origin[0], self.origin[1]
         self.set_w_h(xnew - x, ynew - y)
-        print("Equis", xnew, "la i", ynew)
 
     def button_moved(self, src, tgt, event):
         w = event.x - self.origin[0]
