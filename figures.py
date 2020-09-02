@@ -88,9 +88,6 @@ class Marker():
 
 
 class Figure():
-    """
-    """
-
     def __init__(self, tbox):
         """ Tarea comun: Buscar colores, y ancho del trazo actualmente
             seleccionados.
@@ -106,6 +103,8 @@ class Rectangle(Figure):
     def __init__(self, tbox, x, y):
         super(Rectangle, self).__init__(tbox)
         self.origin = x, y
+        self.cuadranteNegX = False
+        self.cuadranteNegY = False
         self.marker1 = Marker(self.tbox.layer, x, y, color="Red",
                               callback=self.moveto)
 
@@ -135,13 +134,15 @@ class Rectangle(Figure):
         self.width = w
         self.height = h
         x, y = self.origin[0], self.origin[1]
-
+        self.cuadranteNegX = self.cuadranteNegY = False
         if w < 0:
             x += w
             w = -w
+            self.cuadranteNegX = True
         if h < 0:
             y += h
             h = -h
+            self.cuadranteNegY = True
 
         self.set_x_y(x, y)
         self.rect.set_property('width', w)
@@ -153,16 +154,24 @@ class Rectangle(Figure):
         self.set_w_h(w, h)
         self.tbox.layer.disconnect(self.id_release)
         self.tbox.layer.disconnect(self.id_motion)
-
         self.marker2 = Marker(self.tbox.layer, event.x, event.y,
                               color="Yellow",
                               callback=self.resize)
 
     def moveto(self, x, y):
-        self.set_x_y(x, y)
         w = self.rect.get_property('width')
         h = self.rect.get_property('height')
-        self.marker2.moveto(x + w, y + h)
+        self.origin = x, y
+        x1 = x + w
+        y1 = y + h
+        if self.cuadranteNegX:
+            x -= w
+            x1 = x
+        if self.cuadranteNegY:
+            y -= h
+            y1 = y
+        self.set_x_y(x, y)
+        self.marker2.moveto(x1, y1)
 
     def resize(self, xnew, ynew):
         x, y = self.get_x_y()
@@ -178,6 +187,8 @@ class Ellipse(Figure):
     def __init__(self, tbox, x, y):
         super(Ellipse, self).__init__(tbox)
         self.origin = x, y
+        self.cuadranteNegX = False
+        self.cuadranteNegY = False
         self.marker1 = Marker(self.tbox.layer, x, y, color="Red",
                               callback=self.moveto)
 
@@ -206,14 +217,15 @@ class Ellipse(Figure):
         self.width = w
         self.height = h
         x, y = self.origin[0], self.origin[1]
-
+        self.cuadranteNegX = self.cuadranteNegY = False
         if w < 0:
             x += w
             w = -w
+            self.cuadranteNegX = True
         if h < 0:
             y += h
             h = -h
-
+            self.cuadranteNegY = True
         self.set_x_y(x, y)
         self.ellipse.set_property('width', w)
         self.ellipse.set_property('height', h)
@@ -222,7 +234,6 @@ class Ellipse(Figure):
         w = event.x - self.origin[0]
         h = event.y - self.origin[1]
         self.set_w_h(w, h)
-
         self.tbox.layer.disconnect(self.id_release)
         self.tbox.layer.disconnect(self.id_motion)
 
@@ -231,11 +242,19 @@ class Ellipse(Figure):
                               callback=self.resize)
 
     def moveto(self, x, y):
-        self.set_x_y(x, y)
-        self.origin = x, y
         w = self.ellipse.get_property('width')
         h = self.ellipse.get_property('height')
-        self.marker2.moveto(x + w, y + h)
+        self.origin = x, y
+        x1 = x + w
+        y1 = y + h
+        if self.cuadranteNegX:
+            x -= w
+            x1 = x
+        if self.cuadranteNegY:
+            y -= h
+            y1 = y
+        self.set_x_y(x, y)
+        self.marker2.moveto(x1, y1)
 
     def resize(self, xnew, ynew):
         x, y = self.origin[0], self.origin[1]
