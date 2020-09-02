@@ -21,7 +21,6 @@
 #  MA 02110-1301, USA.
 #
 #
-from svg.path import QuadraticBezier
 from gi.repository import Gdk, Gtk, GooCanvas, GdkPixbuf
 import gi
 gi.require_version('Gdk', '3.0')
@@ -263,4 +262,100 @@ class Ellipse(Figure):
     def button_moved(self, src, tgt, event):
         w = event.x - self.origin[0]
         h = event.y - self.origin[1]
+        self.set_w_h(w, h)
+
+
+class Curve(Figure):
+    def __init__(self, tbox, x, y):
+        super(Curve, self).__init__(tbox)
+        self.origin = x, y
+        self.cuadranteNegX = False
+        self.cuadranteNegY = False
+        self.marker1 = Marker(self.tbox.layer, x, y, color="Red",
+                              callback=self.moveto)
+
+        self.curve = GooCanvas.CanvasPath(
+            parent=tbox.layer,
+            data="",
+            x=x, y=y,
+            width=0, height=0,
+            stroke_color_rgba=self.stroke_color,
+            line_width=self.line_width)
+
+        self.id_release = tbox.layer.connect("button-release-event",
+                                             self.button_released)
+        self.id_motion = tbox.layer.connect("motion-notify-event",
+                                            self.button_moved)
+
+    def set_data(self, x, y, w, h):
+        self.curve.set_property('data', "M{x}{y} L {w}{h}")
+
+    def get_data(self):
+        return (self.curve.get_property('data'))
+
+    def set_x_y(self, x, y):
+        self.curve.set_property('x', x)
+        self.curve.set_property('y', y)
+
+    def get_x_y(self):
+        return (self.curve.get_property('x'),
+                self.curve.get_property('y'))
+
+    def set_w_h(self, w, h):
+        self.width = w
+        self.height = h
+        x, y = self.origin[0], self.origin[1]
+        self.cuadranteNegX = self.cuadranteNegY = False
+        if w < 0:
+            x += w
+            w = -w
+            self.cuadranteNegX = True
+        if h < 0:
+            y += h
+            h = -h
+            self.cuadranteNegY = True
+        self.set_x_y(x, y)
+        self.curve.set_property('width', w)
+        self.curve.set_property('height', h)
+
+    def button_released(self, src, tgt, event):
+        x = event.x
+        y = event.y
+        w = x - self.origin[0]
+        h = y - self.origin[1]
+        self.set_data(x, y, w, h)
+        self.set_w_h(w, h)
+        self.tbox.layer.disconnect(self.id_release)
+        self.tbox.layer.disconnect(self.id_motion)
+
+        self.marker2 = Marker(self.tbox.layer, event.x, event.y,
+                              color="Yellow",
+                              callback=self.resize)
+
+    def moveto(self, x, y):
+        w = self.curve.get_property('width')
+        h = self.curve.get_property('height')
+        self.origin = x, y
+        x1 = x + w
+        y1 = y + h
+        if self.cuadranteNegX:
+            x -= w
+            x1 = x
+        if self.cuadranteNegY:
+            y -= h
+            y1 = y
+        self.set_x_y(x, y)
+        self.marker2.moveto(x1, y1)
+
+    def resize(self, xnew, ynew):
+        x, y = self.origin[0], self.origin[1]
+        self.set_w_h(xnew - x, ynew - y)
+        self.set_data(x, y, xnew - x, ynew - y)
+
+    def button_moved(self, src, tgt, event):
+        x = event.x
+        y = event.y
+        w = x - self.origin[0]
+        h = y - self.origin[1]
+        self.set_data(x, y, w, h)
         self.set_w_h(w, h)

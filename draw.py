@@ -22,7 +22,7 @@
 #
 #
 
-from figures import Figure, Rectangle, Ellipse
+from figures import Figure, Rectangle, Ellipse, Curve
 from gi.repository import Gdk, Gtk, GooCanvas, GdkPixbuf
 import gi
 gi.require_version('Gdk', '3.0')
@@ -81,7 +81,7 @@ class Toolbox(Gtk.Frame):
             ("rectangle.svg", "Rectángulo",          Rectangle),
             ("ellipse.svg",   "Ellipse",             Ellipse),
             ("line.svg",      "Líneas",              None),
-            ("qbezier.svg",   "Bézier Cuadratico",   None),
+            ("qbezier.svg",   "Curve",   Curve),
             ("cbezier.svg",   "Bézier Cúbico",       None),
                 ("text.svg",      "Texto",               None)):
             try:
