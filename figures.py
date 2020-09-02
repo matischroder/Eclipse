@@ -288,7 +288,7 @@ class Curve(Figure):
                                             self.button_moved)
 
     def set_data(self, x, y, w, h):
-        self.curve.set_property('data', "M{x}{y} L {w}{h}")
+        self.curve.set_property('data', "M20,100 C20,50 100,50 100,100")
 
     def get_data(self):
         return (self.curve.get_property('data'))
