@@ -285,6 +285,7 @@ class Curve(Figure):
             x=x, y=y,
             width=0, height=0,
             stroke_color_rgba=self.stroke_color,
+            fill_color_rgba=self.fill_color,
             line_width=self.line_width,
         )
 
@@ -402,6 +403,7 @@ class ArcoEllipse(Figure):
             x=x, y=y,
             width=0, height=0,
             stroke_color_rgba=self.stroke_color,
+            fill_color_rgba=self.fill_color,
             line_width=self.line_width,
         )
 
