@@ -38,7 +38,7 @@ def make_rgba(color_string, alpha=1):
 
 
 DEFAULT_STROKE_COLOR = make_rgba("black")
-DEFAULT_FILL_COLOR = make_rgba("transparent", 0.5)
+DEFAULT_FILL_COLOR = make_rgba("transparent", 0)
 
 
 class Toolbox(Gtk.Frame):
