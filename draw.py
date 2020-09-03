@@ -22,7 +22,7 @@
 #
 #
 
-from figures import Figure, Rectangle, Ellipse, Curve
+from figures import Figure, Rectangle, Ellipse, Curve, ArcoEllipse
 from gi.repository import Gdk, Gtk, GooCanvas, GdkPixbuf
 import gi
 gi.require_version('Gdk', '3.0')
@@ -37,7 +37,7 @@ def make_rgba(color_string, alpha=1):
     return c
 
 
-DEFAULT_STROKE_COLOR = make_rgba("yellow")
+DEFAULT_STROKE_COLOR = make_rgba("black")
 DEFAULT_FILL_COLOR = make_rgba("green", 0.5)
 
 
@@ -79,11 +79,10 @@ class Toolbox(Gtk.Frame):
 
         for file, tooltip, figure in (
             ("rectangle.svg", "Rectángulo",          Rectangle),
-            ("ellipse.svg",   "Ellipse",             Ellipse),
-            ("line.svg",      "Líneas",              None),
+            ("ellipse.svg", "Elipse", Ellipse),
+            ("line.svg",      "Arco Ellíptico",              ArcoEllipse),
             ("qbezier.svg",   "Curve",   Curve),
-            ("cbezier.svg",   "Bézier Cúbico",       None),
-                ("text.svg",      "Texto",               None)):
+        ):
             try:
                 pxb = GdkPixbuf.Pixbuf.new_from_file_at_scale(
                     file, -1, 32, True)
