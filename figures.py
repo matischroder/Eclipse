@@ -69,6 +69,9 @@ class Marker():
         self.marker.set_property("center-x", x)
         self.marker.set_property("center-y", y)
 
+    def get_position(self):
+        return(self.marker.get_property("center-x"), self.marker.get_property("center-y"))
+
     def button_moved(self, src, tgt, event):
         if self.position is None:
             return
@@ -213,8 +216,6 @@ class Ellipse(Figure):
                 self.ellipse.get_property('y'))
 
     def set_w_h(self, w, h):
-        self.width = w
-        self.height = h
         x, y = self.origin[0], self.origin[1]
         self.cuadranteNegX = self.cuadranteNegY = False
         if w < 0:
@@ -269,6 +270,9 @@ class Curve(Figure):
     def __init__(self, tbox, x, y):
         super(Curve, self).__init__(tbox)
         self.origin = x, y
+        self.moved = False
+        self.bx = 0
+        self.by = 0
         self.cuadranteNegX = False
         self.cuadranteNegY = False
         self.marker1 = Marker(self.tbox.layer, x, y, color="Red",
@@ -280,7 +284,8 @@ class Curve(Figure):
             x=x, y=y,
             width=0, height=0,
             stroke_color_rgba=self.stroke_color,
-            line_width=self.line_width)
+            line_width=self.line_width,
+        )
 
         self.id_release = tbox.layer.connect("button-release-event",
                                              self.button_released)
@@ -288,7 +293,13 @@ class Curve(Figure):
                                             self.button_moved)
 
     def set_data(self, x, y, w, h):
-        self.curve.set_property('data', "M{x}{y} L {w}{h}")
+        if not self.moved:
+            self.bx = x + (w / 2)
+            self.by = y + h
+        self.curve.set_property(
+            'data', "M{},{} Q{},{} {},{}".format(
+                x, y, self.bx, self.by, x + w, y + h)
+        )
 
     def get_data(self):
         return (self.curve.get_property('data'))
@@ -323,16 +334,30 @@ class Curve(Figure):
         y = event.y
         w = x - self.origin[0]
         h = y - self.origin[1]
-        self.set_data(x, y, w, h)
+        self.set_data(self.origin[0], self.origin[1], w, h)
         self.set_w_h(w, h)
         self.tbox.layer.disconnect(self.id_release)
         self.tbox.layer.disconnect(self.id_motion)
-
-        self.marker2 = Marker(self.tbox.layer, event.x, event.y,
+        self.marker2 = Marker(self.tbox.layer, x, y,
                               color="Yellow",
                               callback=self.resize)
+        self.marker3 = Marker(self.tbox.layer, self.bx, self.by,
+                              color="Cyan",
+                              callback=self.panza
+                              )
+
+    def panza(self, x, y):
+        self.moved = True
+        self.bx = x
+        self.by = y
+        w, h = self.marker2.get_position()
+        print(w, h)
+        self.set_data(self.origin[0], self.origin[1],
+                      w-self.origin[0], h-self.origin[1])
 
     def moveto(self, x, y):
+        self.bx = x2 = self.bx + x - self.origin[0]
+        self.by = y2 = self.by + y - self.origin[1]
         w = self.curve.get_property('width')
         h = self.curve.get_property('height')
         self.origin = x, y
@@ -346,16 +371,17 @@ class Curve(Figure):
             y1 = y
         self.set_x_y(x, y)
         self.marker2.moveto(x1, y1)
+        self.marker3.moveto(x2, y2)
 
     def resize(self, xnew, ynew):
         x, y = self.origin[0], self.origin[1]
         self.set_w_h(xnew - x, ynew - y)
         self.set_data(x, y, xnew - x, ynew - y)
+        self.marker3.moveto(self.bx, self.by)
 
     def button_moved(self, src, tgt, event):
-        x = event.x
-        y = event.y
-        w = x - self.origin[0]
-        h = y - self.origin[1]
+        x, y = self.origin[0], self.origin[1]
+        w = event.x - x
+        h = event.y - y
         self.set_data(x, y, w, h)
         self.set_w_h(w, h)
