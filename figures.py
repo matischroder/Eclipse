@@ -350,7 +350,7 @@ class Curve(Figure):
     def resize(self, xnew, ynew):
         x, y = self.origin[0], self.origin[1]
         self.set_w_h(xnew - x, ynew - y)
-        self.set_data(x, y, xnew - x, ynew - y)
+        #self.set_data(x, y, xnew - x, ynew - y)
 
     def button_moved(self, src, tgt, event):
         x = event.x
