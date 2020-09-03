@@ -81,7 +81,7 @@ class Toolbox(Gtk.Frame):
             ("rectangle.svg", "Rectángulo",          Rectangle),
             ("ellipse.svg", "Elipse", Ellipse),
             ("line.svg",      "Arco Ellíptico",              ArcoEllipse),
-            ("qbezier.svg",   "Curve",   Curve),
+            ("qbezier.svg",   "Curva con Bezier",   Curve),
         ):
             try:
                 pxb = GdkPixbuf.Pixbuf.new_from_file_at_scale(
