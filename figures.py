@@ -23,6 +23,7 @@
 #
 from gi.repository import Gdk, Gtk, GooCanvas, GdkPixbuf
 import gi
+import math
 gi.require_version('Gdk', '3.0')
 gi.require_version('Gtk', '3.0')
 gi.require_version('GooCanvas', '2.0')
@@ -342,7 +343,7 @@ class Curve(Figure):
                               color="Yellow",
                               callback=self.resize)
         self.marker3 = Marker(self.tbox.layer, self.bx, self.by,
-                              color="Cyan",
+                              color="Blue",
                               callback=self.panza
                               )
 
@@ -351,27 +352,22 @@ class Curve(Figure):
         self.bx = x
         self.by = y
         w, h = self.marker2.get_position()
-        print(w, h)
         self.set_data(self.origin[0], self.origin[1],
                       w-self.origin[0], h-self.origin[1])
 
     def moveto(self, x, y):
-        self.bx = x2 = self.bx + x - self.origin[0]
-        self.by = y2 = self.by + y - self.origin[1]
-        w = self.curve.get_property('width')
-        h = self.curve.get_property('height')
+        x2, y2 = self.marker2.get_position()
+        x3, y3 = self.marker3.get_position()
+        x2 += x - self.origin[0]
+        y2 += y - self.origin[1]
+        x3 += x - self.origin[0]
+        y3 += y - self.origin[1]
         self.origin = x, y
-        x1 = x + w
-        y1 = y + h
-        if self.cuadranteNegX:
-            x -= w
-            x1 = x
-        if self.cuadranteNegY:
-            y -= h
-            y1 = y
-        self.set_x_y(x, y)
-        self.marker2.moveto(x1, y1)
-        self.marker3.moveto(x2, y2)
+        self.marker2.moveto(x2, y2)
+        self.marker3.moveto(x3, y3)
+        self.set_data(x, y, x2 - x, y2 - y)
+        self.bx = x3
+        self.by = y3
 
     def resize(self, xnew, ynew):
         x, y = self.origin[0], self.origin[1]
@@ -385,3 +381,133 @@ class Curve(Figure):
         h = event.y - y
         self.set_data(x, y, w, h)
         self.set_w_h(w, h)
+
+
+class ArcoEllipse(Figure):
+    def __init__(self, tbox, x, y):
+        super(ArcoEllipse, self).__init__(tbox)
+        self.origin = x, y
+        self.moved = False
+        self.bx = 0
+        self.by = 0
+        self.up = 1
+        self.cuadranteNegX = False
+        self.cuadranteNegY = False
+        self.marker1 = Marker(self.tbox.layer, x, y, color="Red",
+                              callback=self.moveto)
+
+        self.aEllipse = GooCanvas.CanvasPath(
+            parent=tbox.layer,
+            data="",
+            x=x, y=y,
+            width=0, height=0,
+            stroke_color_rgba=self.stroke_color,
+            line_width=self.line_width,
+        )
+
+        self.id_release = tbox.layer.connect("button-release-event",
+                                             self.button_released)
+        self.id_motion = tbox.layer.connect("motion-notify-event",
+                                            self.button_moved)
+
+    def set_data(self, x, y, w, h):
+        if not self.moved:
+            self.bx = w / 2
+            self.by = 100
+        self.aEllipse.set_property(
+            'data', "M{},{} A{},{} 0 0 {} {},{}".format(
+                x, y, self.bx, self.by, self.up, x + w, y + h)
+        )
+
+    def get_data(self):
+        return (self.aEllipse.get_property('data'))
+
+    def set_x_y(self, x, y):
+        self.aEllipse.set_property('x', x)
+        self.aEllipse.set_property('y', y)
+
+    def get_x_y(self):
+        return (self.aEllipse.get_property('x'),
+                self.aEllipse.get_property('y'))
+
+    def set_w_h(self, w, h):
+        self.width = w
+        self.height = h
+        x, y = self.origin[0], self.origin[1]
+        self.cuadranteNegX = self.cuadranteNegY = False
+        if w < 0:
+            x += w
+            w = -w
+            self.cuadranteNegX = True
+        if h < 0:
+            y += h
+            h = -h
+            self.cuadranteNegY = True
+        self.set_x_y(x, y)
+        self.aEllipse.set_property('width', w)
+        self.aEllipse.set_property('height', h)
+
+    def button_released(self, src, tgt, event):
+        x = event.x
+        y = event.y
+        h = self.aEllipse.get_property('height')
+        if x > self.origin[0]:
+            if y > self.origin[1]:
+                y3 = y - h
+            else:
+                y3 = self.origin[1]-h
+        else:
+            if y > self.origin[1]:
+                y3 = self.origin[1] + h
+            else:
+                y3 = y+h
+        self.set_data(self.origin[0], self.origin[1],
+                      x-self.origin[0], y-self.origin[1])
+        self.tbox.layer.disconnect(self.id_release)
+        self.tbox.layer.disconnect(self.id_motion)
+        self.marker2 = Marker(self.tbox.layer, x, y,
+                              color="Yellow",
+                              callback=self.resize)
+        self.marker3 = Marker(self.tbox.layer, x-((x-self.origin[0])/2), y3,
+                              color="Blue",
+                              callback=self.panza
+                              )
+
+    def panza(self, x, y):
+        self.moved = True
+        x1, y1 = self.marker1.get_position()
+        x2, y2 = self.marker2.get_position()
+        h = self.aEllipse.get_property('height')
+        self.bx = math.hypot(y2 - y1, x2 - x1) / 2
+        self.by = y2 - y
+        if (y > y1+(h/2)):
+            self.up = 0
+        else:
+            self.up = 1
+        self.set_data(x1, y1,
+                      x2-x1, y2-y1)
+
+    def moveto(self, x, y):
+        x2, y2 = self.marker2.get_position()
+        x3, y3 = self.marker3.get_position()
+        x2 += x - self.origin[0]
+        y2 += y - self.origin[1]
+        x3 += x - self.origin[0]
+        y3 += y - self.origin[1]
+        self.origin = x, y
+        self.marker2.moveto(x2, y2)
+        self.marker3.moveto(x3, y3)
+        self.set_data(x, y, x2-x, y2-y)
+
+    def resize(self, xnew, ynew):
+        x, y = self.origin[0], self.origin[1]
+        w = xnew - x
+        h = ynew-y
+        self.set_w_h(w, h)
+        self.set_data(x, y, w, h)
+
+    def button_moved(self, src, tgt, event):
+        x1, y1 = self.marker1.get_position()
+        w = event.x - x1
+        h = event.y - y1
+        self.set_data(x1, y1, w, h)
